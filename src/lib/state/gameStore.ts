@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useShallow } from 'zustand/react/shallow';
 import { UNIT_ROSTER } from '../data/units';
 import { createStackFromSelection, getDefaultArmy, validateArmy } from '../engine/armySetup';
 import { createBattlefield, deployStacks, generateObstacles } from '../engine/battlefieldGenerator';
@@ -754,15 +755,23 @@ export const useHoveredStack = (): Stack | null =>
   useGameStore((state) => getHoveredStack(state.battlefield, state.hoveredHex));
 
 export const useReachableHexes = (): string[] =>
-  useGameStore((state) =>
-    [...state.highlightedHexes.entries()]
-      .filter(([, value]) => value === 'reachable')
-      .map(([key]) => key),
+  useGameStore(
+    useShallow((state) =>
+      [...state.highlightedHexes.entries()]
+        .filter(([, value]) => value === 'reachable')
+        .map(([key]) => key),
+    ),
   );
 
 export const useAttackableTargets = (): Stack[] =>
-  useGameStore((state) =>
-    getAttackableTargetsForState(state.activeStack, state.battlefield, isMovementLocked(state.activeStack, state.selectedStack)),
+  useGameStore(
+    useShallow((state) =>
+      getAttackableTargetsForState(
+        state.activeStack,
+        state.battlefield,
+        isMovementLocked(state.activeStack, state.selectedStack),
+      ),
+    ),
   );
 
 export const useActionGuards = (): {
@@ -771,19 +780,21 @@ export const useActionGuards = (): {
   canDefend: boolean;
   canRangedAttack: boolean;
 } =>
-  useGameStore((state) => {
-    const activeStack = state.activeStack;
-    const movementLocked = isMovementLocked(activeStack, state.selectedStack);
-    const attackTargets = getAttackableTargetsForState(activeStack, state.battlefield, movementLocked);
-    return {
-      canAttack: attackTargets.length > 0,
-      canWait: Boolean(activeStack && !activeStack.isWaiting && !movementLocked),
-      canDefend: Boolean(activeStack && !movementLocked),
-      canRangedAttack: Boolean(
-        activeStack && activeStack.unitType.isRanged && (activeStack.remainingShots ?? 0) > 0 && !movementLocked,
-      ),
-    };
-  });
+  useGameStore(
+    useShallow((state) => {
+      const activeStack = state.activeStack;
+      const movementLocked = isMovementLocked(activeStack, state.selectedStack);
+      const attackTargets = getAttackableTargetsForState(activeStack, state.battlefield, movementLocked);
+      return {
+        canAttack: attackTargets.length > 0,
+        canWait: Boolean(activeStack && !activeStack.isWaiting && !movementLocked),
+        canDefend: Boolean(activeStack && !movementLocked),
+        canRangedAttack: Boolean(
+          activeStack && activeStack.unitType.isRanged && (activeStack.remainingShots ?? 0) > 0 && !movementLocked,
+        ),
+      };
+    }),
+  );
 
 export const getNextEmptySlotIndex = (selection: ArmySelection): 0 | 1 | 2 | null => {
   const index = selection.slots.findIndex((slot) => slot.unitType === null);
@@ -791,4 +802,5 @@ export const getNextEmptySlotIndex = (selection: ArmySelection): 0 | 1 | 2 | nul
 };
 
 export const getRosterUnit = (unitId: string): UnitType | undefined => UNIT_ROSTER.find((unit) => unit.id === unitId);
+
 
