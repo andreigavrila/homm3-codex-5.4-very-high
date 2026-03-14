@@ -12,7 +12,7 @@ export const UNIT_PIKEMAN: UnitType = {
   initiative: 8,
   isRanged: false,
   shots: null,
-  icon: '?',
+  icon: 'P',
 };
 
 export const UNIT_ARCHER: UnitType = {
@@ -27,7 +27,7 @@ export const UNIT_ARCHER: UnitType = {
   initiative: 9,
   isRanged: true,
   shots: 12,
-  icon: '??',
+  icon: 'A',
 };
 
 export const UNIT_GRIFFIN: UnitType = {
@@ -42,7 +42,7 @@ export const UNIT_GRIFFIN: UnitType = {
   initiative: 12,
   isRanged: false,
   shots: null,
-  icon: '??',
+  icon: 'G',
 };
 
 export const UNIT_SWORDSMAN: UnitType = {
@@ -57,7 +57,7 @@ export const UNIT_SWORDSMAN: UnitType = {
   initiative: 11,
   isRanged: false,
   shots: null,
-  icon: '??',
+  icon: 'S',
 };
 
 export const UNIT_CAVALIER: UnitType = {
@@ -72,7 +72,7 @@ export const UNIT_CAVALIER: UnitType = {
   initiative: 13,
   isRanged: false,
   shots: null,
-  icon: '??',
+  icon: 'C',
 };
 
 export const PLAYER_1: Player = {
@@ -156,4 +156,3 @@ export const SCENARIO_SURROUNDED = () => {
 
   return { battlefield, stack };
 };
-

@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import CreatureCountBadge from './CreatureCountBadge';
 import type { UnitType } from '../lib/types';
+import { getUnitGlyph } from '../lib/utils/unitGlyph';
 
 export interface UnitCardProps {
   unitType: UnitType;
@@ -36,7 +37,7 @@ export default function UnitCard({
       style={style}
     >
       <span className="unit-card__icon" aria-hidden="true">
-        {unitType.icon}
+        {getUnitGlyph(unitType)}
       </span>
       {variant !== 'mini' ? (
         <span className="unit-card__content">
@@ -60,4 +61,3 @@ export default function UnitCard({
     </button>
   );
 }
-

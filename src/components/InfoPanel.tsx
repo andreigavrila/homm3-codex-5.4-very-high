@@ -1,4 +1,5 @@
 import type { Stack } from '../lib/types';
+import { getUnitGlyph } from '../lib/utils/unitGlyph';
 
 interface InfoPanelProps {
   stack: Stack | null;
@@ -21,7 +22,7 @@ export default function InfoPanel({ stack, mode = 'active' }: InfoPanelProps) {
     <aside className="info-panel">
       <div className="info-panel__header">
         <span className="info-panel__icon" aria-hidden="true">
-          {stack.unitType.icon}
+          {getUnitGlyph(stack.unitType)}
         </span>
         <div>
           <p className="info-panel__eyebrow">{mode === 'active' ? 'Active Stack' : 'Preview'}</p>

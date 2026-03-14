@@ -61,17 +61,6 @@ export default function HexCell({
     >
       <title>{labelForHex(coord, occupant, state)}</title>
       <polygon points={points} />
-      {occupant ? (
-        <>
-          <text x="25" y="24" textAnchor="middle" className="hex-cell__icon">
-            {occupant.unitType.icon}
-          </text>
-          <circle cx="36" cy="33" r="8" className="hex-cell__badge" />
-          <text x="36" y="36" textAnchor="middle" className="hex-cell__count">
-            {occupant.creatureCount}
-          </text>
-        </>
-      ) : null}
     </g>
   );
 }
