@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import CreatureCountBadge from './CreatureCountBadge';
 import type { UnitType } from '../lib/types';
-import { getUnitGlyph } from '../lib/utils/unitGlyph';
+import { getUnitGlyph, isUnitImageIcon } from '../lib/utils/unitGlyph';
 
 export interface UnitCardProps {
   unitType: UnitType;
@@ -28,6 +28,7 @@ export default function UnitCard({
   onClick,
 }: UnitCardProps) {
   const style = playerColor ? ({ '--player-card-color': playerColor } as CSSProperties) : undefined;
+  const showsImage = isUnitImageIcon(unitType.icon);
 
   return (
     <button
@@ -35,9 +36,14 @@ export default function UnitCard({
       className={`unit-card unit-card--${variant}${selected ? ' is-selected' : ''}${playerColor ? ' has-player-color' : ''}`}
       onClick={onClick}
       style={style}
+      aria-label={unitType.name}
     >
       <span className="unit-card__icon" aria-hidden="true">
-        {getUnitGlyph(unitType)}
+        {showsImage ? (
+          <img className="unit-card__portrait" src={unitType.icon} alt="" />
+        ) : (
+          getUnitGlyph(unitType)
+        )}
       </span>
       {variant !== 'mini' ? (
         <span className="unit-card__content">

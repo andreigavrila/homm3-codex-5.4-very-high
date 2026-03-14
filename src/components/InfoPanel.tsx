@@ -1,5 +1,5 @@
 import type { Stack } from '../lib/types';
-import { getUnitGlyph } from '../lib/utils/unitGlyph';
+import { getUnitGlyph, isUnitImageIcon } from '../lib/utils/unitGlyph';
 
 interface InfoPanelProps {
   stack: Stack | null;
@@ -17,12 +17,13 @@ export default function InfoPanel({ stack, mode = 'active' }: InfoPanelProps) {
   }
 
   const hpPercent = Math.max(0, Math.min(100, (stack.currentHp / Math.max(stack.unitType.hp, 1)) * 100));
+  const showsImage = isUnitImageIcon(stack.unitType.icon);
 
   return (
     <aside className="info-panel">
       <div className="info-panel__header">
         <span className="info-panel__icon" aria-hidden="true">
-          {getUnitGlyph(stack.unitType)}
+          {showsImage ? <img className="info-panel__portrait" src={stack.unitType.icon} alt="" /> : getUnitGlyph(stack.unitType)}
         </span>
         <div>
           <p className="info-panel__eyebrow">{mode === 'active' ? 'Active Stack' : 'Preview'}</p>

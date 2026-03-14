@@ -1,7 +1,7 @@
 import HexCell, { type HexCellVariant } from './HexCell';
 import { useGameStore } from '../lib/state/gameStore';
 import { coordToKey } from '../lib/utils/hexUtils';
-import { getUnitGlyph } from '../lib/utils/unitGlyph';
+import { getUnitGlyph, isUnitImageIcon } from '../lib/utils/unitGlyph';
 
 const HEX_WIDTH = 50;
 const HEX_HEIGHT = 58;
@@ -107,6 +107,8 @@ export default function HexGrid() {
             const { x, y } = getHexCenter(hex.col, hex.row);
             const xOffset = x - HEX_WIDTH / 2;
             const yOffset = y - HEX_HEIGHT / 2;
+            const clipId = `clip-${occupant.id}`;
+            const showsImage = isUnitImageIcon(occupant.unitType.icon);
 
             return (
               <g
@@ -114,9 +116,28 @@ export default function HexGrid() {
                 className={`hex-cell__overlay hex-cell__overlay--${occupant.owner.id}`}
                 transform={`translate(${xOffset} ${yOffset})`}
               >
-                <text x="25" y="24" textAnchor="middle" dominantBaseline="middle" className="hex-cell__icon">
-                  {getUnitGlyph(occupant.unitType)}
-                </text>
+                <defs>
+                  <clipPath id={clipId}>
+                    <circle cx="25" cy="20" r="13" />
+                  </clipPath>
+                </defs>
+                <circle cx="25" cy="20" r="14" className="hex-cell__portrait-frame" />
+                {showsImage ? (
+                  <image
+                    href={occupant.unitType.icon}
+                    x="11"
+                    y="6"
+                    width="28"
+                    height="28"
+                    preserveAspectRatio="xMidYMid slice"
+                    clipPath={`url(#${clipId})`}
+                    className="hex-cell__portrait"
+                  />
+                ) : (
+                  <text x="25" y="20" textAnchor="middle" dominantBaseline="middle" className="hex-cell__icon">
+                    {getUnitGlyph(occupant.unitType)}
+                  </text>
+                )}
                 <circle cx="25" cy="44" r="11" className="hex-cell__badge" />
                 <text x="25" y="45" textAnchor="middle" dominantBaseline="middle" className="hex-cell__count">
                   {occupant.creatureCount}

@@ -13,7 +13,7 @@ export const UNIT_ROSTER: UnitType[] = [
     initiative: 8,
     isRanged: false,
     shots: null,
-    icon: 'P',
+    icon: '/assets/units/pikeman.png',
   },
   {
     id: 'archer',
@@ -27,7 +27,7 @@ export const UNIT_ROSTER: UnitType[] = [
     initiative: 9,
     isRanged: true,
     shots: 12,
-    icon: 'A',
+    icon: '/assets/units/archer.png',
   },
   {
     id: 'griffin',
@@ -41,7 +41,7 @@ export const UNIT_ROSTER: UnitType[] = [
     initiative: 12,
     isRanged: false,
     shots: null,
-    icon: 'G',
+    icon: '/assets/units/griffin.png',
   },
   {
     id: 'swordsman',
@@ -55,7 +55,7 @@ export const UNIT_ROSTER: UnitType[] = [
     initiative: 11,
     isRanged: false,
     shots: null,
-    icon: 'S',
+    icon: '/assets/units/swordsman.png',
   },
   {
     id: 'monk',
@@ -69,7 +69,7 @@ export const UNIT_ROSTER: UnitType[] = [
     initiative: 12,
     isRanged: true,
     shots: 12,
-    icon: 'M',
+    icon: '/assets/units/monk.png',
   },
   {
     id: 'cavalier',
@@ -83,6 +83,6 @@ export const UNIT_ROSTER: UnitType[] = [
     initiative: 13,
     isRanged: false,
     shots: null,
-    icon: 'C',
+    icon: '/assets/units/cavalier.png',
   },
 ];

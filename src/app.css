@@ -279,6 +279,7 @@ input:focus-visible,
   gap: var(--space-md);
   text-align: left;
   padding: var(--space-md);
+  overflow: hidden;
   cursor: pointer;
   transition: transform 200ms ease-out, box-shadow 200ms ease-out, border-color 200ms ease-out;
 }
@@ -297,6 +298,10 @@ input:focus-visible,
   border-color: var(--player-card-color, var(--color-border-default));
 }
 
+.unit-card--full {
+  min-height: 196px;
+}
+
 .unit-card--mini {
   width: 56px;
   min-width: 56px;
@@ -312,17 +317,48 @@ input:focus-visible,
 .info-panel__icon {
   display: grid;
   place-items: center;
-  min-width: 48px;
-  min-height: 48px;
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
   border-radius: var(--radius-md);
-  background: rgba(0, 0, 0, 0.25);
+  background: linear-gradient(180deg, rgba(8, 12, 22, 0.85), rgba(18, 28, 48, 0.75));
+  font-family: 'Cinzel', serif;
   font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.unit-card--full .unit-card__icon {
+  width: 104px;
+  height: 164px;
+  border-radius: 10px;
+}
+
+.unit-card--compact .unit-card__icon {
+  width: 64px;
+  height: 64px;
+}
+
+.unit-card--mini .unit-card__icon {
+  width: 40px;
+  height: 40px;
+}
+
+.unit-card__portrait,
+.info-panel__portrait {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
 }
 
 .unit-card__content {
   display: grid;
   gap: var(--space-sm);
   flex: 1;
+  min-width: 0;
 }
 
 .unit-card__name {
@@ -713,4 +749,6 @@ input:focus-visible,
     color: var(--color-warning);
   }
 }
+
+
 
