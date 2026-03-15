@@ -1,4 +1,5 @@
 import HexCell, { type HexCellVariant } from './HexCell';
+import type { Stack } from '../lib/types';
 import { useGameStore } from '../lib/state/gameStore';
 import { coordToKey } from '../lib/utils/hexUtils';
 import { getUnitGlyph, isUnitImageIcon } from '../lib/utils/unitGlyph';
@@ -8,6 +9,19 @@ const HEX_HEIGHT = 58;
 const X_STEP = 50;
 const Y_STEP = 43.5;
 const HEX_POINTS = '25,0 50,14.5 50,43.5 25,58 0,43.5 0,14.5';
+const BOARD_PADDING_X = 56;
+const BOARD_PADDING_TOP = 92;
+const BOARD_PADDING_BOTTOM = 22;
+const UNIT_FOOT_Y = 48;
+
+const UNIT_STAGE_BOX: Record<string, { width: number; height: number }> = {
+  pikeman: { width: 92, height: 126 },
+  archer: { width: 90, height: 122 },
+  griffin: { width: 112, height: 126 },
+  swordsman: { width: 94, height: 124 },
+  monk: { width: 90, height: 120 },
+  cavalier: { width: 108, height: 126 },
+};
 
 const resolveVariant = (
   occupantId: string | null,
@@ -49,6 +63,29 @@ export const getHexCenter = (col: number, row: number): { x: number; y: number }
   y: row * Y_STEP + HEX_HEIGHT / 2,
 });
 
+const getUnitStageFrame = (stack: Stack) => {
+  const frame = UNIT_STAGE_BOX[stack.unitType.id] ?? { width: 96, height: 124 };
+
+  return {
+    width: frame.width,
+    height: frame.height,
+    x: HEX_WIDTH / 2 - frame.width / 2,
+    y: UNIT_FOOT_Y - frame.height,
+  };
+};
+
+const getBadgeFrame = (stack: Stack) => {
+  const label = `${stack.creatureCount}`;
+  const width = Math.max(24, label.length * 8 + 12);
+  const x = stack.owner.id === 'player1' ? HEX_WIDTH + 6 : -width - 6;
+
+  return {
+    width,
+    x,
+    y: 33,
+  };
+};
+
 export default function HexGrid() {
   const battlefield = useGameStore((state) => state.battlefield);
   const highlightedHexes = useGameStore((state) => state.highlightedHexes);
@@ -57,94 +94,112 @@ export default function HexGrid() {
   const dispatch = useGameStore((state) => state.dispatch);
 
   const allHexes = battlefield.hexes.flat();
-  const occupiedHexes = allHexes.filter((hex) => hex.occupant);
-  const width = battlefield.width * X_STEP + HEX_WIDTH;
-  const height = battlefield.height * Y_STEP + HEX_HEIGHT / 2;
+  const occupiedHexes = allHexes
+    .filter((hex) => hex.occupant)
+    .sort((left, right) => left.row - right.row || left.col - right.col);
+  const boardWidth = battlefield.width * X_STEP + HEX_WIDTH;
+  const boardHeight = battlefield.height * Y_STEP + HEX_HEIGHT / 2;
+  const width = boardWidth + BOARD_PADDING_X * 2;
+  const height = boardHeight + BOARD_PADDING_TOP + BOARD_PADDING_BOTTOM;
   const hoveredOccupant = hoveredHex ? battlefield.hexes[hoveredHex.col][hoveredHex.row].occupant : null;
 
   return (
     <div className="hex-grid-wrap">
       <svg className="hex-grid" viewBox={`0 0 ${width} ${height}`} role="grid" aria-label="Battlefield">
-        <g className="hex-grid__cells">
-          {allHexes.map((hex) => {
-            const { x, y } = getHexCenter(hex.col, hex.row);
-            const xOffset = x - HEX_WIDTH / 2;
-            const yOffset = y - HEX_HEIGHT / 2;
-            const key = coordToKey({ col: hex.col, row: hex.row });
-            const highlight = highlightedHexes.get(key);
-            const isHovered = hoveredHex?.col === hex.col && hoveredHex?.row === hex.row;
-            const isActive = activeStack?.position.col === hex.col && activeStack?.position.row === hex.row;
-            const variant = resolveVariant(
-              hex.occupant?.id ?? null,
-              hex.occupant?.owner.id ?? null,
-              hex.isObstacle,
-              highlight,
-              Boolean(isActive),
-              Boolean(isHovered),
-            );
+        <g transform={`translate(${BOARD_PADDING_X} ${BOARD_PADDING_TOP})`}>
+          <g className="hex-grid__cells">
+            {allHexes.map((hex) => {
+              const { x, y } = getHexCenter(hex.col, hex.row);
+              const xOffset = x - HEX_WIDTH / 2;
+              const yOffset = y - HEX_HEIGHT / 2;
+              const key = coordToKey({ col: hex.col, row: hex.row });
+              const highlight = highlightedHexes.get(key);
+              const isHovered = hoveredHex?.col === hex.col && hoveredHex?.row === hex.row;
+              const isActive = activeStack?.position.col === hex.col && activeStack?.position.row === hex.row;
+              const variant = resolveVariant(
+                hex.occupant?.id ?? null,
+                hex.occupant?.owner.id ?? null,
+                hex.isObstacle,
+                highlight,
+                Boolean(isActive),
+                Boolean(isHovered),
+              );
 
-            return (
-              <HexCell
-                key={key}
-                coord={{ col: hex.col, row: hex.row }}
-                x={xOffset}
-                y={yOffset}
-                points={HEX_POINTS}
-                state={variant}
-                occupant={hex.occupant}
-                showPath={highlight === 'path'}
-                isActive={Boolean(isActive)}
-                onClick={() => dispatch({ type: 'CLICK_HEX', payload: { hex: { col: hex.col, row: hex.row } } })}
-                onMouseEnter={() => dispatch({ type: 'HOVER_HEX', payload: { hex: { col: hex.col, row: hex.row } } })}
-                onMouseLeave={() => dispatch({ type: 'HOVER_HEX', payload: { hex: null } })}
-              />
-            );
-          })}
-        </g>
-        <g className="hex-grid__occupants" aria-hidden="true">
-          {occupiedHexes.map((hex) => {
-            const occupant = hex.occupant!;
-            const { x, y } = getHexCenter(hex.col, hex.row);
-            const xOffset = x - HEX_WIDTH / 2;
-            const yOffset = y - HEX_HEIGHT / 2;
-            const clipId = `clip-${occupant.id}`;
-            const showsImage = isUnitImageIcon(occupant.unitType.icon);
+              return (
+                <HexCell
+                  key={key}
+                  coord={{ col: hex.col, row: hex.row }}
+                  x={xOffset}
+                  y={yOffset}
+                  points={HEX_POINTS}
+                  state={variant}
+                  occupant={hex.occupant}
+                  showPath={highlight === 'path'}
+                  isActive={Boolean(isActive)}
+                  onClick={() => dispatch({ type: 'CLICK_HEX', payload: { hex: { col: hex.col, row: hex.row } } })}
+                  onMouseEnter={() => dispatch({ type: 'HOVER_HEX', payload: { hex: { col: hex.col, row: hex.row } } })}
+                  onMouseLeave={() => dispatch({ type: 'HOVER_HEX', payload: { hex: null } })}
+                />
+              );
+            })}
+          </g>
+          <g className="hex-grid__occupants" aria-hidden="true">
+            {occupiedHexes.map((hex) => {
+              const occupant = hex.occupant!;
+              const { x, y } = getHexCenter(hex.col, hex.row);
+              const xOffset = x - HEX_WIDTH / 2;
+              const yOffset = y - HEX_HEIGHT / 2;
+              const showsImage = isUnitImageIcon(occupant.unitType.icon);
+              const unitFrame = getUnitStageFrame(occupant);
+              const badgeFrame = getBadgeFrame(occupant);
+              const isActive = activeStack?.id === occupant.id;
 
-            return (
-              <g
-                key={`overlay-${occupant.id}`}
-                className={`hex-cell__overlay hex-cell__overlay--${occupant.owner.id}`}
-                transform={`translate(${xOffset} ${yOffset})`}
-              >
-                <defs>
-                  <clipPath id={clipId}>
-                    <circle cx="25" cy="20" r="13" />
-                  </clipPath>
-                </defs>
-                <circle cx="25" cy="20" r="14" className="hex-cell__portrait-frame" />
-                {showsImage ? (
-                  <image
-                    href={occupant.unitType.icon}
-                    x="11"
-                    y="6"
-                    width="28"
-                    height="28"
-                    preserveAspectRatio="xMidYMid slice"
-                    clipPath={`url(#${clipId})`}
-                    className="hex-cell__portrait"
+              return (
+                <g
+                  key={`overlay-${occupant.id}`}
+                  className={`hex-cell__overlay hex-cell__overlay--${occupant.owner.id}${isActive ? ' is-active' : ''}`}
+                  transform={`translate(${xOffset} ${yOffset})`}
+                >
+                  <ellipse cx="25" cy="47" rx="16" ry="5" className="hex-cell__shadow" />
+                  {showsImage ? (
+                    <image
+                      href={occupant.unitType.icon}
+                      x={unitFrame.x}
+                      y={unitFrame.y}
+                      width={unitFrame.width}
+                      height={unitFrame.height}
+                      preserveAspectRatio="xMidYMax meet"
+                      className="hex-cell__portrait hex-cell__portrait--full"
+                    />
+                  ) : (
+                    <>
+                      <circle cx="25" cy="20" r="18" className="hex-cell__portrait-frame" />
+                      <text x="25" y="20" textAnchor="middle" dominantBaseline="middle" className="hex-cell__icon">
+                        {getUnitGlyph(occupant.unitType)}
+                      </text>
+                    </>
+                  )}
+                  <rect
+                    x={badgeFrame.x}
+                    y={badgeFrame.y}
+                    width={badgeFrame.width}
+                    height="18"
+                    rx="4"
+                    className="hex-cell__badge"
                   />
-                ) : (
-                  <text x="25" y="20" textAnchor="middle" dominantBaseline="middle" className="hex-cell__icon">
-                    {getUnitGlyph(occupant.unitType)}
+                  <text
+                    x={badgeFrame.x + badgeFrame.width / 2}
+                    y={badgeFrame.y + 9.5}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className="hex-cell__count"
+                  >
+                    {occupant.creatureCount}
                   </text>
-                )}
-                <circle cx="25" cy="44" r="11" className="hex-cell__badge" />
-                <text x="25" y="45" textAnchor="middle" dominantBaseline="middle" className="hex-cell__count">
-                  {occupant.creatureCount}
-                </text>
-              </g>
-            );
-          })}
+                </g>
+              );
+            })}
+          </g>
         </g>
       </svg>
       <div className="hex-grid__tooltip">

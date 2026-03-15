@@ -532,16 +532,19 @@ input:focus-visible,
 .battlefield-panel__grid-wrap {
   position: relative;
   margin: var(--space-lg) 0;
+  overflow: visible;
 }
 
 .hex-grid-wrap {
   display: grid;
   gap: var(--space-sm);
+  overflow: visible;
 }
 
 .hex-grid {
   width: 100%;
-  min-height: 430px;
+  min-height: 520px;
+  overflow: visible;
   background: linear-gradient(180deg, rgba(15, 52, 96, 0.5), rgba(30, 42, 69, 0.95));
   border-radius: var(--radius-lg);
   border: 1px solid rgba(201, 162, 39, 0.15);
@@ -551,6 +554,11 @@ input:focus-visible,
 .hex-grid__tooltip {
   color: var(--color-text-secondary);
   min-height: 20px;
+}
+
+.hex-grid__occupants,
+.hex-cell__overlay {
+  pointer-events: none;
 }
 
 .hex-cell {
@@ -596,14 +604,35 @@ input:focus-visible,
   filter: drop-shadow(0 0 10px rgba(201, 162, 39, 0.55));
 }
 
+.hex-cell__shadow {
+  fill: rgba(0, 0, 0, 0.24);
+}
+
+.hex-cell__portrait-frame {
+  fill: rgba(15, 23, 42, 0.9);
+  stroke: rgba(201, 162, 39, 0.7);
+  stroke-width: 1.4;
+}
+
+.hex-cell__portrait--full {
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
+}
+
+.hex-cell__overlay.is-active .hex-cell__portrait--full {
+  filter: drop-shadow(0 0 10px rgba(201, 162, 39, 0.45)) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.42));
+}
+
 .hex-cell__icon {
   fill: var(--color-text-primary);
-  font-size: 16px;
+  font-size: 18px;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
 }
 
 .hex-cell__badge {
-  fill: rgba(22, 33, 62, 0.92);
-  stroke: var(--color-border-gold);
+  fill: rgba(39, 19, 75, 0.94);
+  stroke: rgba(225, 212, 255, 0.8);
+  stroke-width: 1.2;
 }
 
 .hex-cell__count {
@@ -749,6 +778,7 @@ input:focus-visible,
     color: var(--color-warning);
   }
 }
+
 
 
 

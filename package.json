@@ -4,7 +4,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "sync:unit-assets": "node scripts/sync-unit-assets.mjs",
+    "predev": "npm run sync:unit-assets",
     "dev": "vite",
+    "prebuild": "npm run sync:unit-assets",
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
     "test:watch": "vitest",
