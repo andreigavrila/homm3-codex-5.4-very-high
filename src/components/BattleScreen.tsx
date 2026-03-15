@@ -3,11 +3,12 @@ import ActionButtons from './ActionButtons';
 import CombatLog from './CombatLog';
 import DamagePopup from './DamagePopup';
 import ErrorBoundary from './ErrorBoundary';
-import HexGrid, { getHexCenter } from './HexGrid';
+import HexGrid, { getBattlefieldCenter, type StrikeEffect } from './HexGrid';
 import InfoPanel from './InfoPanel';
 import PlayerBanner from './PlayerBanner';
 import TurnOrderBar from './TurnOrderBar';
 import { useActionGuards, useAttackableTargets, useGameStore, useHoveredStack } from '../lib/state/gameStore';
+import { ActionType } from '../lib/types';
 import { hexDistance } from '../lib/utils/hexUtils';
 
 interface PopupState {
@@ -16,6 +17,10 @@ interface PopupState {
   creaturesKilled: number;
   position: { x: number; y: number };
 }
+
+const ENTRY_STAGGER_MS = 260;
+const STRIKE_DURATION_MS = 460;
+const POPUP_DURATION_MS = 1200;
 
 export default function BattleScreen() {
   const player1 = useGameStore((state) => state.player1);
@@ -30,33 +35,84 @@ export default function BattleScreen() {
   const attackableTargets = useAttackableTargets();
   const actionGuards = useActionGuards();
   const [popups, setPopups] = useState<PopupState[]>([]);
+  const [strikeEffects, setStrikeEffects] = useState<StrikeEffect[]>([]);
   const lastLogIndex = useRef(0);
 
   useEffect(() => {
+    if (combatLog.length < lastLogIndex.current) {
+      lastLogIndex.current = 0;
+      setPopups([]);
+      setStrikeEffects([]);
+    }
+
     if (combatLog.length <= lastLogIndex.current) {
       return;
     }
 
-    const latestEntry = combatLog[combatLog.length - 1];
+    const newEntries = combatLog.slice(lastLogIndex.current);
     lastLogIndex.current = combatLog.length;
-    if (!latestEntry.damageDealt || !latestEntry.toHex) {
-      return;
-    }
+    const timeoutIds: number[] = [];
 
-    const center = getHexCenter(latestEntry.toHex.col, latestEntry.toHex.row);
-    const popup: PopupState = {
-      id: `${latestEntry.actorStackId}-${combatLog.length}`,
-      amount: latestEntry.damageDealt,
-      creaturesKilled: latestEntry.creaturesKilled ?? 0,
-      position: center,
+    newEntries.forEach((entry, index) => {
+      const baseDelay = index * ENTRY_STAGGER_MS;
+      const strikeKind =
+        entry.actionType === ActionType.MELEE_ATTACK
+          ? 'melee'
+          : entry.actionType === ActionType.RETALIATION
+            ? 'retaliation'
+            : null;
+
+      if (strikeKind && entry.fromHex && entry.toHex && entry.targetStackId) {
+        const strikeEffect: StrikeEffect = {
+          id: `${entry.actorStackId}-${combatLog.length}-strike-${index}`,
+          attackerStackId: entry.actorStackId,
+          targetStackId: entry.targetStackId,
+          fromHex: entry.fromHex,
+          toHex: entry.toHex,
+          kind: strikeKind,
+        };
+
+        timeoutIds.push(
+          window.setTimeout(() => {
+            setStrikeEffects((current) => [...current, strikeEffect]);
+          }, baseDelay),
+        );
+
+        timeoutIds.push(
+          window.setTimeout(() => {
+            setStrikeEffects((current) => current.filter((effect) => effect.id !== strikeEffect.id));
+          }, baseDelay + STRIKE_DURATION_MS),
+        );
+      }
+
+      if (!entry.damageDealt || !entry.toHex) {
+        return;
+      }
+
+      const popup: PopupState = {
+        id: `${entry.actorStackId}-${combatLog.length}-popup-${index}`,
+        amount: entry.damageDealt,
+        creaturesKilled: entry.creaturesKilled ?? 0,
+        position: getBattlefieldCenter(entry.toHex.col, entry.toHex.row),
+      };
+      const popupDelay = baseDelay + (strikeKind ? Math.floor(STRIKE_DURATION_MS * 0.32) : 40);
+
+      timeoutIds.push(
+        window.setTimeout(() => {
+          setPopups((current) => [...current, popup]);
+        }, popupDelay),
+      );
+
+      timeoutIds.push(
+        window.setTimeout(() => {
+          setPopups((current) => current.filter((effect) => effect.id !== popup.id));
+        }, popupDelay + POPUP_DURATION_MS),
+      );
+    });
+
+    return () => {
+      timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
     };
-
-    setPopups((current) => [...current, popup]);
-    const timeoutId = window.setTimeout(() => {
-      setPopups((current) => current.filter((entry) => entry.id !== popup.id));
-    }, 1200);
-
-    return () => window.clearTimeout(timeoutId);
   }, [combatLog]);
 
   const attackTarget =
@@ -94,7 +150,7 @@ export default function BattleScreen() {
               <span>{selectedStack?.id === activeStack?.id ? 'Moved: attack or click current hex to end turn' : 'Select a move or attack target'}</span>
             </div>
             <div className="battlefield-panel__grid-wrap">
-              <HexGrid />
+              <HexGrid strikeEffects={strikeEffects} />
               <div className="battlefield-panel__popups">
                 {popups.map((popup) => (
                   <DamagePopup

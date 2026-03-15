@@ -782,3 +782,152 @@ input:focus-visible,
 
 
 
+
+.hex-cell__unit {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+
+.hex-cell__unit.is-striking {
+  animation: meleeLunge 460ms cubic-bezier(0.22, 0.8, 0.26, 1) forwards;
+}
+
+.hex-cell__unit.is-strike-target .hex-cell__portrait--full,
+.hex-cell__unit.is-strike-target .hex-cell__portrait-frame,
+.hex-cell__unit.is-strike-target .hex-cell__icon {
+  animation: meleeImpactFlash 460ms ease-out forwards;
+}
+
+.hex-cell__unit.is-strike-target .hex-cell__shadow {
+  animation: meleeShadowImpact 460ms ease-out forwards;
+}
+
+.hex-grid__strikes {
+  pointer-events: none;
+}
+
+.melee-strike__trail,
+.melee-strike__origin,
+.melee-strike__impact {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.melee-strike__trail {
+  fill: none;
+  stroke: rgba(255, 219, 120, 0.96);
+  stroke-width: 6;
+  stroke-linecap: round;
+  opacity: 0;
+  filter: drop-shadow(0 0 8px rgba(255, 219, 120, 0.48));
+  animation: meleeStrikeTrail 460ms ease-out forwards;
+}
+
+.melee-strike__origin {
+  fill: rgba(255, 242, 196, 0.98);
+  opacity: 0;
+  animation: meleeStrikeOrigin 460ms ease-out forwards;
+}
+
+.melee-strike__impact {
+  fill: none;
+  stroke: rgba(255, 242, 196, 0.98);
+  stroke-width: 2.5;
+  opacity: 0;
+  animation: meleeStrikeImpact 460ms ease-out forwards;
+}
+
+.melee-strike--retaliation .melee-strike__trail {
+  stroke: rgba(255, 126, 126, 0.96);
+  filter: drop-shadow(0 0 8px rgba(255, 126, 126, 0.52));
+}
+
+.melee-strike--retaliation .melee-strike__origin,
+.melee-strike--retaliation .melee-strike__impact {
+  fill: rgba(255, 205, 205, 0.98);
+  stroke: rgba(255, 205, 205, 0.98);
+}
+
+@keyframes meleeLunge {
+  0% {
+    transform: translate(0, 0);
+  }
+  35% {
+    transform: translate(var(--lunge-x), var(--lunge-y));
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes meleeImpactFlash {
+  0% {
+    opacity: 1;
+  }
+  35% {
+    opacity: 1;
+    filter: brightness(1.28) drop-shadow(0 0 16px rgba(255, 243, 196, 0.52));
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes meleeShadowImpact {
+  0% {
+    opacity: 1;
+  }
+  35% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes meleeStrikeTrail {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes meleeStrikeOrigin {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  18% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+@keyframes meleeStrikeImpact {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  36% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  52% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.85);
+  }
+}

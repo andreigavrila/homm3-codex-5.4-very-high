@@ -1,5 +1,6 @@
+import type { CSSProperties } from 'react';
 import HexCell, { type HexCellVariant } from './HexCell';
-import type { Stack } from '../lib/types';
+import type { HexCoord, Stack } from '../lib/types';
 import { useGameStore } from '../lib/state/gameStore';
 import { coordToKey } from '../lib/utils/hexUtils';
 import { getUnitGlyph, isUnitImageIcon } from '../lib/utils/unitGlyph';
@@ -22,6 +23,19 @@ const UNIT_STAGE_BOX: Record<string, { width: number; height: number }> = {
   monk: { width: 90, height: 120 },
   cavalier: { width: 108, height: 126 },
 };
+
+export interface StrikeEffect {
+  id: string;
+  attackerStackId: string;
+  targetStackId: string;
+  fromHex: HexCoord;
+  toHex: HexCoord;
+  kind: 'melee' | 'retaliation';
+}
+
+interface HexGridProps {
+  strikeEffects?: StrikeEffect[];
+}
 
 const resolveVariant = (
   occupantId: string | null,
@@ -63,6 +77,15 @@ export const getHexCenter = (col: number, row: number): { x: number; y: number }
   y: row * Y_STEP + HEX_HEIGHT / 2,
 });
 
+export const getBattlefieldCenter = (col: number, row: number): { x: number; y: number } => {
+  const center = getHexCenter(col, row);
+
+  return {
+    x: center.x + BOARD_PADDING_X,
+    y: center.y + BOARD_PADDING_TOP,
+  };
+};
+
 const getUnitStageFrame = (stack: Stack) => {
   const frame = UNIT_STAGE_BOX[stack.unitType.id] ?? { width: 96, height: 124 };
 
@@ -86,7 +109,21 @@ const getBadgeFrame = (stack: Stack) => {
   };
 };
 
-export default function HexGrid() {
+const getLungeStyle = (effect: StrikeEffect): CSSProperties => {
+  const from = getHexCenter(effect.fromHex.col, effect.fromHex.row);
+  const to = getHexCenter(effect.toHex.col, effect.toHex.row);
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const distance = Math.max(Math.hypot(dx, dy), 1);
+  const reach = Math.min(12, distance * 0.26);
+
+  return {
+    '--lunge-x': `${(dx / distance) * reach}px`,
+    '--lunge-y': `${(dy / distance) * reach}px`,
+  } as CSSProperties;
+};
+
+export default function HexGrid({ strikeEffects = [] }: HexGridProps) {
   const battlefield = useGameStore((state) => state.battlefield);
   const highlightedHexes = useGameStore((state) => state.highlightedHexes);
   const hoveredHex = useGameStore((state) => state.hoveredHex);
@@ -153,6 +190,11 @@ export default function HexGrid() {
               const unitFrame = getUnitStageFrame(occupant);
               const badgeFrame = getBadgeFrame(occupant);
               const isActive = activeStack?.id === occupant.id;
+              const strikeEffect = strikeEffects.find(
+                (effect) => effect.attackerStackId === occupant.id || effect.targetStackId === occupant.id,
+              );
+              const isStriking = strikeEffect?.attackerStackId === occupant.id;
+              const isStrikeTarget = strikeEffect?.targetStackId === occupant.id;
 
               return (
                 <g
@@ -160,25 +202,30 @@ export default function HexGrid() {
                   className={`hex-cell__overlay hex-cell__overlay--${occupant.owner.id}${isActive ? ' is-active' : ''}`}
                   transform={`translate(${xOffset} ${yOffset})`}
                 >
-                  <ellipse cx="25" cy="47" rx="16" ry="5" className="hex-cell__shadow" />
-                  {showsImage ? (
-                    <image
-                      href={occupant.unitType.icon}
-                      x={unitFrame.x}
-                      y={unitFrame.y}
-                      width={unitFrame.width}
-                      height={unitFrame.height}
-                      preserveAspectRatio="xMidYMax meet"
-                      className="hex-cell__portrait hex-cell__portrait--full"
-                    />
-                  ) : (
-                    <>
-                      <circle cx="25" cy="20" r="18" className="hex-cell__portrait-frame" />
-                      <text x="25" y="20" textAnchor="middle" dominantBaseline="middle" className="hex-cell__icon">
-                        {getUnitGlyph(occupant.unitType)}
-                      </text>
-                    </>
-                  )}
+                  <g
+                    className={`hex-cell__unit${isStriking ? ' is-striking' : ''}${isStrikeTarget ? ' is-strike-target' : ''}`}
+                    style={isStriking && strikeEffect ? getLungeStyle(strikeEffect) : undefined}
+                  >
+                    <ellipse cx="25" cy="47" rx="16" ry="5" className="hex-cell__shadow" />
+                    {showsImage ? (
+                      <image
+                        href={occupant.unitType.icon}
+                        x={unitFrame.x}
+                        y={unitFrame.y}
+                        width={unitFrame.width}
+                        height={unitFrame.height}
+                        preserveAspectRatio="xMidYMax meet"
+                        className="hex-cell__portrait hex-cell__portrait--full"
+                      />
+                    ) : (
+                      <>
+                        <circle cx="25" cy="20" r="18" className="hex-cell__portrait-frame" />
+                        <text x="25" y="20" textAnchor="middle" dominantBaseline="middle" className="hex-cell__icon">
+                          {getUnitGlyph(occupant.unitType)}
+                        </text>
+                      </>
+                    )}
+                  </g>
                   <rect
                     x={badgeFrame.x}
                     y={badgeFrame.y}
@@ -196,6 +243,37 @@ export default function HexGrid() {
                   >
                     {occupant.creatureCount}
                   </text>
+                </g>
+              );
+            })}
+          </g>
+          <g className="hex-grid__strikes" aria-hidden="true">
+            {strikeEffects.map((effect) => {
+              const from = getHexCenter(effect.fromHex.col, effect.fromHex.row);
+              const to = getHexCenter(effect.toHex.col, effect.toHex.row);
+              const dx = to.x - from.x;
+              const dy = to.y - from.y;
+              const distance = Math.max(Math.hypot(dx, dy), 1);
+              const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+              const originOffset = 7;
+              const travel = Math.max(distance - 14, 14);
+
+              return (
+                <g
+                  key={effect.id}
+                  className={`melee-strike melee-strike--${effect.kind}`}
+                  transform={`translate(${from.x} ${from.y}) rotate(${angle})`}
+                >
+                  <circle cx="0" cy="0" r="5" className="melee-strike__origin" />
+                  <line
+                    x1={originOffset}
+                    y1="0"
+                    x2={originOffset + travel}
+                    y2="0"
+                    className="melee-strike__trail"
+                    style={{ strokeDasharray: `${travel} ${travel}`, strokeDashoffset: travel }}
+                  />
+                  <circle cx={originOffset + travel} cy="0" r="10" className="melee-strike__impact" />
                 </g>
               );
             })}
