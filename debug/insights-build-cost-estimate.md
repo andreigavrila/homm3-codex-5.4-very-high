@@ -10,12 +10,12 @@ Two ways to think about the cost of building this prototype:
 
 Median comparison against the East-EU senior-with-harness baseline:
 
-| Path             | Time            | Cost    |
-| --------------   | --------------- | ------- |
-| AI-PoC           | ~30 minutes     | ~$100   |
-| AI-Validated     | ~90 minutes     | ~$500   |
-| Human-PoC        | ~5 working days | ~$2,000 |
-| Human-Validated  | ~8 working days | ~$3,600 |
+| Path             | Time            | Cost      |
+| --------------   | --------------- | -------   |
+| AI-PoC           | ~45 minutes     | ~$100     |
+| AI-Validated     | ~90 minutes     | ~$500-1k  |
+| Human-PoC        | ~5 working days | ~$2k-4k   |
+| Human-Validated  | ~8 working days | ~$4k-5.5k |
 
 **Result PoC: ~80x faster and ~20x cheaper**
 **Result Validated: ~42x faster and ~7.2x cheaper**
